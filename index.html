@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Download Mini HTML App Builder</title>
+
+<style>
+  body {
+    background:#111;
+    color:#eee;
+    font-family: monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    text-align:center;
+  }
+  button {
+    padding:15px 25px;
+    font-size:16px;
+    background:#222;
+    border:1px solid #444;
+    color:#fff;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  button:active { background:#444; }
+</style>
+</head>
+<body>
+
+<h2>Mini HTML App Builder</h2>
+<p>Click to download ZIP</p>
+
+<button onclick="downloadZip()">Download</button>
+
+<script>
+/* ===============================
+   FILE CONTENT (YOUR EDITOR)
+================================ */
+const FILE_CONTENT = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mini HTML App Builder</title>
+<style>
+body{margin:0;background:#111;color:#eee;font-family:monospace;display:flex;flex-direction:column;height:100vh;}
+header{background:#1a1a1a;padding:10px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #333;}
+button,label{background:#222;color:#fff;border:1px solid #444;padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;}
+button:active{background:#444;}
+textarea{flex:1;width:100%;border:none;outline:none;resize:none;background:#000;color:#0f0;padding:10px;font-size:12px;font-family:monospace;}
+input[type=file]{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+<button onclick="loadTemplate()">Template</button>
+<button onclick="previewHTML()">Preview</button>
+<button onclick="exportHTML()">Export</button>
+<button onclick="clearEditor()">Clear</button>
+<label>Import<input type="file" accept=".html,.txt" onchange="importFile(this)"></label>
+</header>
+
+<textarea id="editor" spellcheck="false"></textarea>
+
+<script>
+const editor = document.getElementById("editor");
+const TEMPLATE_HTML = \`<!DOCTYPE html>
+<html><head><title>My App</title></head><body><h1>Hello world</h1></body></html>\`;
+
+function loadTemplate(){ if(editor.value.trim()&&!confirm("Replace?"))return; editor.value=TEMPLATE_HTML; }
+function clearEditor(){ if(confirm("Clear?"))editor.value=""; }
+function previewHTML(){ const w=window.open("about:blank"); w.document.write(editor.value); w.document.close(); }
+function exportHTML(){
+  const blob=new Blob([editor.value],{type:"text/html"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="app.html";
+  a.click();
+}
+function importFile(i){ const f=i.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=e=>editor.value=e.target.result; r.readAsText(f); }
+<\/script>
+
+</body>
+</html>`;
+
+/* ===============================
+   MINIMAL ZIP BUILDER
+================================ */
+function downloadZip() {
+  const files = [
+    { name: "index.html", content: FILE_CONTENT }
+  ];
+
+  const zipParts = [];
+  let offset = 0;
+  const central = [];
+
+  files.forEach(file => {
+    const data = new TextEncoder().encode(file.content);
+    const header = new Uint8Array([
+      80,75,3,4,20,0,0,0,0,0,0,0,0,0,
+      data.length,0,0,0,
+      data.length,0,0,0,
+      file.name.length,0,0,0
+    ]);
+    zipParts.push(header, new TextEncoder().encode(file.name), data);
+
+    const c = new Uint8Array([
+      80,75,1,2,20,0,20,0,0,0,0,0,0,0,0,0,
+      data.length,0,0,0,
+      data.length,0,0,0,
+      file.name.length,0,0,0,
+      0,0,0,0,0,0,
+      offset & 255,(offset>>8)&255,(offset>>16)&255,(offset>>24)&255
+    ]);
+    central.push(c, new TextEncoder().encode(file.name));
+    offset += header.length + file.name.length + data.length;
+  });
+
+  const end = new Uint8Array([
+    80,75,5,6,0,0,0,0,
+    files.length,0,files.length,0,
+    central.reduce((a,b)=>a+b.length,0),0,0,0,
+    offset & 255,(offset>>8)&255,(offset>>16)&255,(offset>>24)&255,
+    0,0
+  ]);
+
+  const blob = new Blob([...zipParts, ...central, end], { type: "application/zip" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "MiniHTMLBuilder.zip";
+  a.click();
+}
+</script>
+
+</body>
+</html>
