@@ -37,64 +37,18 @@
 <button onclick="downloadZip()">Download</button>
 
 <script>
-/* ===============================
-   FILE CONTENT (YOUR EDITOR)
-================================ */
-const FILE_CONTENT = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Mini HTML App Builder</title>
-<style>
-body{margin:0;background:#111;color:#eee;font-family:monospace;display:flex;flex-direction:column;height:100vh;}
-header{background:#1a1a1a;padding:10px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #333;}
-button,label{background:#222;color:#fff;border:1px solid #444;padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;}
-button:active{background:#444;}
-textarea{flex:1;width:100%;border:none;outline:none;resize:none;background:#000;color:#0f0;padding:10px;font-size:12px;font-family:monospace;}
-input[type=file]{display:none;}
-</style>
-</head>
-<body>
+async function downloadZip() {
+  // URL to your external editor.html
+  const editorURL = 'editor.html'; // <-- make sure this exists in your repo
 
-<header>
-<button onclick="loadTemplate()">Template</button>
-<button onclick="previewHTML()">Preview</button>
-<button onclick="exportHTML()">Export</button>
-<button onclick="clearEditor()">Clear</button>
-<label>Import<input type="file" accept=".html,.txt" onchange="importFile(this)"></label>
-</header>
+  // Fetch the file content
+  const response = await fetch(editorURL);
+  if (!response.ok) return alert('Failed to fetch editor.html');
+  const content = await response.text();
 
-<textarea id="editor" spellcheck="false"></textarea>
-
-<script>
-const editor = document.getElementById("editor");
-const TEMPLATE_HTML = \`<!DOCTYPE html>
-<html><head><title>My App</title></head><body><h1>Hello world</h1></body></html>\`;
-
-function loadTemplate(){ if(editor.value.trim()&&!confirm("Replace?"))return; editor.value=TEMPLATE_HTML; }
-function clearEditor(){ if(confirm("Clear?"))editor.value=""; }
-function previewHTML(){ const w=window.open("about:blank"); w.document.write(editor.value); w.document.close(); }
-function exportHTML(){
-  const blob=new Blob([editor.value],{type:"text/html"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="app.html";
-  a.click();
-}
-function importFile(i){ const f=i.files[0]; if(!f)return;
-  const r=new FileReader(); r.onload=e=>editor.value=e.target.result; r.readAsText(f); }
-<\/script>
-
-</body>
-</html>`;
-
-/* ===============================
-   MINIMAL ZIP BUILDER
-================================ */
-function downloadZip() {
+  // Create a ZIP containing editor.html
   const files = [
-    { name: "index.html", content: FILE_CONTENT }
+    { name: 'editor.html', content }
   ];
 
   const zipParts = [];
